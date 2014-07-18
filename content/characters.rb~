@@ -1,0 +1,5 @@
+CHARACTERS_ARY = [
+  Character.new("Kpt. Kirk", 1),
+  Character.new("Händler",   2),
+  Character.new("Hexe",      3)
+]

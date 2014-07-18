@@ -1,0 +1,61 @@
+# Load all library files
+require_relative 'character.rb'
+require_relative 'event.rb'
+require_relative 'location.rb'
+require_relative 'player.rb'
+
+# The Game object holds all other objects and can be passed into methods that
+# need information about the game. It is accessible via the GAME global everywhere.
+
+# It also holds all logic needed to start the game
+
+# @locations is a hash with locations as values and ids as keys
+
+class Game
+  attr_reader :locations, :characters
+  attr_accessor :players, :current_player
+
+  def initialize
+    #store locations
+    @locations = {}
+    LOCATIONS_ARY.each { |l| @locations[l.id] = l }
+
+    #store characters
+    @characters = {}
+    CHARACTERS_ARY.each { |c| @characters[c.id] = c }
+  end
+
+  def start!
+    message(:text, "Los geht's!")
+
+    winner = do_rounds
+
+    message(:win, winner.id)
+  end
+
+  def do_rounds
+    @players.cycle do |current_player|
+      @current_player = current_player
+
+      message(:next, @current_player.id)
+
+      #let the player play their turn
+      @current_player.do_turn
+
+      #terms of victory (haha)
+      # TODO: find good terms of victory
+      @players.each { |player| return player if player.honor >= 100 }
+    end
+  end
+
+  def register_player(name)
+    #start the game if 0 is returned!
+    return 0 if name.empty?
+
+    player = Player.new(name)
+    @players << player
+
+    message(:registered, player.id, player.name)
+    message(:text, "Seid gegrüßt #{player.name}!")
+  end
+end

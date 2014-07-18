@@ -1,0 +1,94 @@
+# Load all library files
+require_relative 'character.rb'
+require_relative 'event.rb'
+require_relative 'location.rb'
+require_relative 'player.rb'
+
+# The Game object holds all other objects and can be passed into methods that
+# need information about the game. It is accessible via the GAME global everywhere.
+
+# It also holds all logic needed to start the game
+
+# @locations is a hash with locations as values and ids as keys
+
+class Game
+  attr_reader :locations, :characters, :current_player
+  attr_accessor :players
+
+  def initialize
+    #store locations
+    @locations = {}
+    LOCATIONS_ARY.each { |l| @locations[l.id] = l }
+
+    #store characters
+    @characters = {}
+    CHARACTERS_ARY.each { |c| @characters[c.id] = c }
+
+    #prepare players ary
+    @players = []
+  end
+
+  def start!
+    message(:text, "Los geht's!")
+
+    @players.each { |player| player.prepare }
+    @current_player = @players.first
+
+    winner = do_rounds
+
+    message(:win, winner.id)
+  end
+
+  def do_rounds
+    loop do
+      # Set next player
+      index_next_player = @players.find_index(@current_player) + 1
+
+      if @players[index_next_player]
+        @current_player = @players[index_next_player]
+      else
+        @current_player = @players.first
+      end
+
+      message(:next, @current_player.id)
+
+      #let the player play their turn
+      @current_player.do_turn
+
+      # terms of victory (haha)
+      # TODO: find good terms of victory
+      @players.each { |player| return player if player.honor >= 100 }
+    end
+  end
+
+  # This sets the next player
+  def next_player=(player)
+    index = @players.find_index(player) - 1
+
+    # Sets the current player to the player before the wanted player,
+    # so that the program picks the wanted player up
+    if index >= 0
+      @current_player = @players[index]
+    else
+      @current_player = @players.last
+    end
+  end
+
+  def register_player(name)
+    #start the game if 0 is returned!
+    return 0 if name.empty?
+
+    message(:text, "Seid gegrüßt #{name}!")
+
+    player = Player.new(name)
+    @players << player
+
+    message(:registered, player.id, player.name)
+  end
+
+  # The API for recieving messages
+  # Returns a message object
+  def recieve_message
+    GAMESERVER.recieve_message
+  end
+end

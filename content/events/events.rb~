@@ -1,0 +1,52 @@
+# sample event #1
+class P0wn < Event
+  def initialize
+    @character_id = 1
+
+    @investigate  = true
+    @hidden       = true
+
+    @necessary    = false
+
+    @probability_points = 10
+
+    @text = "Woop, you've been p0wnd!"
+  end
+
+  def occur!
+    GAME.current_player.honor += 50
+    GAME.current_player.current_location = GAME.locations.sample
+  end
+end
+
+GAME.locations.each_value { |l| l.events << P0wn.new }
+
+# sample event #2
+class Offer < Event
+  def initialize
+    @character_id = 2
+
+    @investigate  = true
+    @hidden       = true
+
+    @necessary    = true
+
+    @probability_points = 20
+
+    @text = "Lutscherstange, Lutscherstange.."
+  end
+
+  def occur!
+    answer = ask(GAME.current_player, "Wer will eine Lutscherstange?", { :ja => "Ja, absolut!", :nein => "Definitiv nicht!" })
+
+    if answer == :ja
+      puts "Well, then you're gay..."
+    else
+      puts "Good choice Mister!"
+    end
+
+    @necessary = false
+  end
+end
+
+GAME.locations[2].events << Offer.new
