@@ -1,8 +1,8 @@
 require 'thin'
 require 'em-websocket'
 
-require_relative 'message.rb'
-require_relative 'game.rb'
+require_relative './lib/message.rb'
+require_relative './lib/game.rb'
 
 # decorate send to perform logging etc.
 class EventMachine::WebSocket::Connection
