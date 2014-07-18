@@ -1,8 +1,8 @@
 require 'thin'
 require 'em-websocket'
 
-require_relative './lib/message.rb'
-require_relative './lib/game.rb'
+require_relative 'message.rb'
+require_relative 'game.rb'
 
 # decorate send to perform logging etc.
 class EventMachine::WebSocket::Connection
@@ -78,7 +78,7 @@ class Server
     EM.run do
       EM::WebSocket.start(:host => '0.0.0.0', :port => '2012') do |ws|
         ws.onopen do |obj|
-          puts "somebody connected!"#, obj.inspect
+          puts "somebody connected!"
         end
 
         ws.onmessage do |msg|
@@ -87,7 +87,7 @@ class Server
         end
 
         ws.onclose do |reason|
-          puts "somebody has disconnected", reason.inspect
+          puts "somebody has disconnected"
           @clients.each { |_,clients| clients.delete(ws) }
         end
       end
