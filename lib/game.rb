@@ -23,7 +23,12 @@ class Game
 
   ## API for events:
   # This let's the given player be next
-  attr_writer :next_player
+  def next_player=(player)
+    # check if next player is actually a Player object
+    raise ProgrammerError unless player.is_a? Player
+
+    @next_player = player
+  end
 
   attr_reader :id, :players, :characters, :locations, :current_player, :answers_buffer
 
@@ -219,6 +224,7 @@ class Game
   def set_next_player
     # has somebody changed the player's order?
     if @next_player
+      # set current_player and reset next_player
       @current_player = @next_player
       @next_player = nil
       return
