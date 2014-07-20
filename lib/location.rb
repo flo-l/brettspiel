@@ -20,13 +20,6 @@ class Location
     @events = []
   end
 
-  # This lets the @current_player of game visit the location
-  # and some event occur
-  def get_visited(game, mode)
-    event = select_event(game, mode)
-    event.prepare_and_occur!(game)
-  end
-
   def select_event(game, mode)
     #find events corresponding to the mode
     events = @events.select { |event| event.send(mode) }
@@ -37,7 +30,7 @@ class Location
     #find possible and necessary events
     necessary_events = events.select { |event| event.necessary?(game) }
 
-    if necessary_events.empty?
+    event = if necessary_events.empty?
       #calculate probabilities
       sum_probability_points = events.map{ |event| event.probability_points }.inject(:+)
       probabilities = events.map{ |event| event.probability_points.to_f / sum_probability_points }
@@ -61,8 +54,11 @@ class Location
     else
       necessary_events.last #return the most recent necessary event if one exists
     end
+
+    raise NotImplementedError if event.nil?
+
+    event
   end
-  private :select_event
 
   def to_s
     @name

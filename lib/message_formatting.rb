@@ -34,15 +34,18 @@ module MessageFormatting
   #
   # The player should answer with the number of the selected option (1-indexed)
   def message_question(player_id, character_id, question, options)
-    # The options hash must be buffered, so that the key of the answer can be returned by another method
-    @options_buffer = options
+    # The options keys must be buffered, so that the key of the answer can be returned by another method
+    @options_buffer = options.keys
 
-    response = @response << {:type => "question"}
+    response = {:type => "question"}
     response["player_id"]    = player_id
     response["character_id"] = character_id
     response["question"]     = question
     response["options"]      = options.values
     @response << response.to_json
+
+    # stop the request
+    throw :stop
   end
 
   def message_honor(player_id, amount)

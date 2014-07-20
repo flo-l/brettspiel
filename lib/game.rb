@@ -21,19 +21,28 @@ class Game
   STORE_PATH = File.expand_path('games/') + '/'
   FILE_EXTENSION = '.game'
 
-  attr_reader :id, :players, :characters, :locations, :current_player
+  ## API for events:
+  # This let's the given player be next
+  attr_writer :next_player
+
+  attr_reader :id, :players, :characters, :locations, :current_player, :answers_buffer
 
   # everything in here is mutable by the events
   def initialize
+    # id and if the game has already started
     @id = SecureRandom.hex
+    @started = false
+
+    # player things
     @players = []
     @next_player = nil
 
     # responses for the client
     @response = []
 
-    # a buffer for answers (actually their keys) already given by the client
-    @answer_buffer = []
+    # answers (actually their keys) already given by the client
+    @answers = []
+    @answers_buffer = []
 
     # the current event, in case the game must be marshalled and loaded again during the execution
     # of the event code. Eg: during a question.
@@ -61,15 +70,19 @@ class Game
     end
   end
 
-  ## API for events:
-  # This let's the given player be next
-  attr_writer :next_player
-
   ## API for the server:
   # Loads a Game with a given id
   def self.load(id)
     path = STORE_PATH + id + FILE_EXTENSION
-    source = File.open(path, 'r')
+
+    # Open the file or raise an exception
+    begin
+      source = File.open(path, 'r')
+    rescue SystemCallError
+      raise GameIdWrongError
+    end
+
+    # Load the game object
     game = Marshal.load(source)
   end
 
@@ -85,18 +98,33 @@ class Game
     # clear the response buffer
     @response.clear
 
-    case msg.type.to_sym
-      when :join
-      then join(msg.name)
+    # in case an answer from the client is needed
+    catch :stop do
 
-      when :start
-      then start
+      if [:join, :start].member? msg.type.to_sym
+        # Check that the game has not already started
+        raise GameAlreadyStartedError if @started
 
-      when :answer
-      then resume(msg.answer)
+        if msg.type.to_sym == :join
+          join(msg.name)
+        else
+          start
+        end
 
-      when :move_request
-      then do_round(msg.player_id, msg.location_id)
+      elsif [:answer, :move_request].member? msg.type.to_sym
+        # Check that the game has already started
+        raise GameNotStartedError if not @started
+
+        if msg.type.to_sym == :answer      
+          resume(msg.answer)
+        else
+          do_round(msg.player_id, msg.location_id)
+        end
+
+      else
+        raise MessageTypeUnknownError, msg.type.to_sym
+      end
+
     end
 
     @response
@@ -106,6 +134,9 @@ class Game
   ## Internal methods, not part of the event API
   # Add a player to the game
   def join(name)
+    # Check if the players name is already taken
+    raise PlayerNameTakenError if @players.any? { |player| player.name == name }
+
     # Player with name and id
     player = Player.new(name, self)
     @players << player
@@ -114,6 +145,12 @@ class Game
 
   # Start the game
   def start
+    # Check if there has at least one player joined
+    raise NoPlayerError if @players.empty?
+
+    # The game has now started
+    @started = true
+
     # Set the current player to the first player
     @current_player = @players.first
 
@@ -125,28 +162,51 @@ class Game
   end
 
   # Resume execution of the event after a question
-  def resume(answer_index) # 1-indexed
+  def resume(answer_index) # 0-indexed
     # add the answer to the buffer
-    answer_key = @options_buffer.keys[answer_index-1]
-    @answer_buffer << answer_key
+    answer_key = @options_buffer[answer_index]
+
+    # check if the answer_index is out of bounds
+    raise ImpossibleResponseError unless answer_index < @options_buffer.count
+
+    @answers << answer_key
+
+    # buffer so one can pop shift the answers atop the ary
+    @answers_buffer = @answers.dup
 
     # resume the execution of the event code
-    @current_event.occur!
+    @current_event.prepare_and_occur!(self)
+
+    # set next player etc.
+    end_round
   end
 
   # Starts a round of the game, given the player and a location they want to visit
   def do_round(player_id, location_id)
     # check if the right player wants to move
-    raise Error, "Wrong Player sent move_request" unless @current_player.id == player_id
+    raise WrongPlayerMoveError unless @current_player.id == player_id
 
     # resolve the location_id
     location = @locations[location_id]
+    raise LocationNotPresentError unless location
 
     # move the player
     @current_player.current_location = location
 
-    # let the player visit the location aka the event happen
-    location.get_visited(self, mode=:investigate) #FIXME ask player for mode
+    # select an event to occur
+    @current_event = location.select_event(self, mode=:investigate) #FIXME ask player for mode
+
+    # let it occur
+    @current_event.prepare_and_occur!(self)
+
+    # set next player etc.
+    end_round
+  end
+
+  def end_round
+    # we don't need these anymore
+    @answers.clear
+    @answers_buffer.clear
 
     # set next player as @current_player
     set_next_player

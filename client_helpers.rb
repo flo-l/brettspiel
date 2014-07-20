@@ -104,7 +104,8 @@ module TCPMessages
     auswahl = gets.chomp.to_i
 
     response = {:type => "answer"}
-    response["answer"] = auswahl
+    response["game_id"]     = @game_id
+    response["answer"] = auswahl - 1
     @socket.puts response.to_json
   end
 

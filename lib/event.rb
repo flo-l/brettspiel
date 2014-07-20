@@ -29,6 +29,7 @@ class Event
     # exchange the character name (string) with the actual character object
     character = game.characters.values.find { |character| character.name == @character }
     @character = character
+    @character_id = @character.id
   end
 
   #any event can happen by default, may be overridden
@@ -53,7 +54,15 @@ class Event
   # This takes a hash, whose values are options (strings) and asks the
   # player which they choose. It returns the key of the selected option
   def ask(player, question, options)
-    @game.message_question(player.id, @character_id, question, options)
+    raise ProgrammerError unless player.is_a? Player and options.is_a? Hash
+
+    if @game.answers_buffer.empty?
+      # ask for the answer if we don't have it
+      @game.message_question(player.id, @character_id, question, options)
+    else
+      # return the answer if we have it
+      @game.answers_buffer.shift
+    end
   end
 
   # Replaces the normal puts with a puts that sends a message from 

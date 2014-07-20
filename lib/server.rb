@@ -4,6 +4,26 @@ require 'em-websocket'
 require_relative 'message.rb'
 require_relative 'game.rb'
 
+# Exceptions
+class ServerError < StandardError; nil; end
+
+class InvalidMessageError < ServerError; nil; end
+class LackingGameIdError < InvalidMessageError; nil; end
+class MessageTypeUnknownError < InvalidMessageError; nil; end
+
+class UserInputError < ServerError; nil; end
+class GameIdWrongError < UserInputError; nil; end
+class PlayerNameTakenError < UserInputError; nil; end
+class WrongPlayerMoveError < UserInputError; nil; end
+class ImpossibleResponseError < UserInputError; nil; end
+class LocationNotPresentError < UserInputError; nil; end
+
+class GameAlreadyStartedError < ServerError; nil; end
+class GameNotStartedError < ServerError; nil; end
+class NoPlayerError < ServerError; nil; end
+
+class ProgrammerError < ServerError; nil; end
+
 # decorate send to perform logging etc.
 class EventMachine::WebSocket::Connection
   alias :old_send :send
@@ -51,7 +71,7 @@ class Server
     if msg.respond_to?(:game_id)
       game = Game.load(msg.game_id)
     else
-      raise StandardError, "Invalid Message, lacking game_id. msg: #{msg_str}"
+      raise LackingGameIdError
     end
 
     # Handle the request with the game object
@@ -83,7 +103,15 @@ class Server
 
         ws.onmessage do |msg|
           puts "Recieved: #{msg}"
-          handle(msg, ws)
+
+          begin
+            handle(msg, ws)
+          rescue ServerError => error
+            puts "SERVER ERROR: " + error.inspect
+          rescue => e
+            puts "GENERIC ERROR:"
+            puts "#{e.backtrace.shift}: #{e.message} (#{e.class})", e.backtrace.map { |s| "        from " << s }
+          end
         end
 
         ws.onclose do |reason|

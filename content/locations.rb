@@ -20,4 +20,7 @@ def LOCATIONS_HASH.add_to(names, event)
 
   values = each_value.select { |ary| names.member?(ary[0]) }
   values.each { |ary| ary[2] << event }
+
+  # probably a typo in the names ary
+  raise ProgrammerError if values.count != names.count
 end

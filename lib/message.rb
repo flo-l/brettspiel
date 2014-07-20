@@ -16,4 +16,9 @@ class Message
       end
     end
   end
+
+  # In case some fields are missing
+  def method_missing(*args)
+    raise InvalidMessageError
+  end
 end
