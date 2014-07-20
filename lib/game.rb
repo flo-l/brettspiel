@@ -98,20 +98,20 @@ class Game
     # clear the response buffer
     @response.clear
 
-    # in case an answer from the client is needed
-    catch :stop do
+    if [:join, :start].member? msg.type.to_sym
+      # Check that the game has not already started
+      raise GameAlreadyStartedError if @started
 
-      if [:join, :start].member? msg.type.to_sym
-        # Check that the game has not already started
-        raise GameAlreadyStartedError if @started
+      if msg.type.to_sym == :join
+        join(msg.name)
+      else
+        start
+      end
 
-        if msg.type.to_sym == :join
-          join(msg.name)
-        else
-          start
-        end
+    elsif [:answer, :move_request].member? msg.type.to_sym
+      # in case an answer from the client is needed
+      catch :stop do
 
-      elsif [:answer, :move_request].member? msg.type.to_sym
         # Check that the game has already started
         raise GameNotStartedError if not @started
 
@@ -121,10 +121,10 @@ class Game
           do_round(msg.player_id, msg.location_id)
         end
 
-      else
-        raise MessageTypeUnknownError, msg.type.to_sym
       end
 
+    else
+      raise MessageTypeUnknownError, msg.type.to_sym
     end
 
     @response
@@ -163,11 +163,11 @@ class Game
 
   # Resume execution of the event after a question
   def resume(answer_index) # 0-indexed
+    # check if the answer_index is out of bounds
+    raise ImpossibleResponseError unless (0...@options_buffer.count).include? answer_index
+
     # add the answer to the buffer
     answer_key = @options_buffer[answer_index]
-
-    # check if the answer_index is out of bounds
-    raise ImpossibleResponseError unless answer_index < @options_buffer.count
 
     @answers << answer_key
 
@@ -219,9 +219,9 @@ class Game
   def set_next_player
     # has somebody changed the player's order?
     if @next_player
-      player = @next_player #buffer
-      @next_player = nil    #reset @next_player
-      return player         #early return!! :P
+      @current_player = @next_player
+      @next_player = nil
+      return
     end
 
     index = @players.find_index(@current_player) # of current player

@@ -49,7 +49,7 @@ class Server
     end
   end
 
-  # This handles an incoming message and returns an ary with min 1 response
+  # This handles an incoming message and returns an ary with min 1 response(s)
   def handle(msg_str, client)
     msg = Message.new(msg_str)
 
@@ -58,20 +58,20 @@ class Server
       return client.send new_game
     end
 
-    # Register a client if they want to join a game, associating each connection with a game id
+    # Load the game
+    if msg.respond_to?(:game_id)
+      game = Game.load(msg.game_id)
+    else
+      raise LackingGameIdError
+    end
+
+    # Register a client if they want to join the game, associating each connection with a game id
     if msg.type.to_sym == :join
       if @clients[msg.game_id]
         @clients[msg.game_id] << client unless @clients[msg.game_id].include? client
       elsif
         @clients[msg.game_id] = [client]
       end
-    end
-
-    # Load the game
-    if msg.respond_to?(:game_id)
-      game = Game.load(msg.game_id)
-    else
-      raise LackingGameIdError
     end
 
     # Handle the request with the game object
@@ -107,7 +107,7 @@ class Server
           begin
             handle(msg, ws)
           rescue ServerError => error
-            puts "SERVER ERROR: " + error.inspect
+            puts "SERVER ERROR: " + error.class
           rescue => e
             puts "GENERIC ERROR:"
             puts "#{e.backtrace.shift}: #{e.message} (#{e.class})", e.backtrace.map { |s| "        from " << s }
