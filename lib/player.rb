@@ -23,7 +23,7 @@ class Player
     # The Player needs to know the Game instance he's playing in
     @game = game
 
-    @current_location = game.locations.first
+    @current_location = game.locations.values.first
     @honor = 0
 
     @cards = CardHand.new

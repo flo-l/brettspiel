@@ -92,6 +92,7 @@ module TCPMessages
     response["game_id"]     = @game_id
     response["player_id"]   = @current_player.id
     response["location_id"] = ask_next_location_id
+    response["mode"]        = "active"
     @socket.puts response.to_json
   end
 
@@ -149,7 +150,7 @@ end
 class Character
   attr_reader :name, :id
 
-  def initialize(name, id)
+  def initialize(id, name)
     @name = name
     @id = id
   end

@@ -5,3 +5,5 @@ gem 'em-websocket'
 gem 'em-websocket-client'
 
 gem 'json'
+
+gem 'rubyzip'

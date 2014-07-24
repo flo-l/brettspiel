@@ -1,18 +1,11 @@
 require 'securerandom'
+require 'csv'
 
 require_relative 'message_formatting.rb'
 require_relative 'character.rb'
 require_relative 'event.rb'
 require_relative 'location.rb'
 require_relative 'player.rb'
-
-# Content, yeah!
-require_relative '../content/characters.rb'
-require_relative '../content/locations.rb'
-Dir.open('content/events/').each do |file|
-  next unless file =~ /.rb$/
-  require_relative '../content/events/' << file
-end
 
 # Game represents a game with all mutable data.
 class Game
@@ -32,12 +25,16 @@ class Game
 
   attr_reader :id, :players, :characters, :locations, :current_player, :answers_buffer
 
-  # everything in here is mutable by the events
-  def initialize
+  # most of the things in here is mutable by the events
+  def initialize(pack_name)
     # id and if the game has already started
     @id = SecureRandom.hex
     @started = false
 
+    # content pack management
+    @pack_folder = File.expand_path('content/' << pack_name)
+    @pack_file   = pack_name
+    
     # player things
     @players = []
     @next_player = nil
@@ -54,25 +51,10 @@ class Game
     @current_event = nil
 
     # Characters
-    @characters = {}
-    CHARACTERS_HASH.each { |id, name| @characters[id] = Character.new(name, id) }
+    load_characters
 
     # Locations
-    @locations = {}
-    LOCATIONS_HASH.each do |id, ary|
-      # instantiate Location object with name, id and neighbour_ids
-      location = Location.new(ary[0], id, ary[1])
-
-      # add events
-      ary[2].each do |event|
-        event = event.new
-        event.setup!(self)
-        location.events << event
-      end
-
-      # store the location object
-      @locations[id] = location
-    end
+    load_locations
   end
 
   ## API for the server:
@@ -123,9 +105,19 @@ class Game
         if msg.type.to_sym == :answer      
           resume(msg.answer)
         else
-          do_round(msg.player_id, msg.location_id)
+          # check if the mode is present and valid
+          if msg.respond_to? :mode
+            mode = msg.mode.to_sym
+            
+            # check if the mode is valid
+            raise InvalidMessageError unless [:active, :passive].include? mode
+          
+          else
+            raise InvalidMessageError
+          end
+          
+          do_round(msg.player_id, msg.location_id, mode)
         end
-
       end
 
     else
@@ -187,20 +179,24 @@ class Game
   end
 
   # Starts a round of the game, given the player and a location they want to visit
-  def do_round(player_id, location_id)
+  def do_round(player_id, location_id, mode)
     # check if the right player wants to move
     raise WrongPlayerMoveError unless @current_player.id == player_id
 
     # resolve the location_id
     location = @locations[location_id]
     raise LocationNotPresentError unless location
+    
+    # check if new location is reachable from the old location
+    old_location = @current_player.current_location
+    raise LocationNotReachableError unless (old_location.neighbour_ids + [old_location.id]).include? location.id
 
-    # move the player
+    # everything ok, move the player
     @current_player.current_location = location
 
     # select an event to occur
-    @current_event = location.select_event(self, mode=:investigate) #FIXME ask player for mode
-
+    @current_event = location.select_event(self, mode)
+    
     # let it occur
     @current_event.prepare_and_occur!(self)
 
@@ -235,6 +231,57 @@ class Game
     unless @current_player = @players[index+1]
       # next player unless we've had the last player playing last round, start over in that case
       @current_player = @players.first
+    end
+  end
+
+  # content loading
+  def load_characters
+    @characters = {}
+    
+    path = File.expand_path(@pack_folder + '/characters/characters.csv')
+    CSV.foreach(path, {col_sep: ";", headers: true, encoding: "UTF-8"}) do |row|
+      id, name = row.to_hash.values
+      @characters[id] = Character.new(id, name)
+    end
+  end
+
+  def load_locations
+    # key is id, value: [name, neighbour_ids, events]
+    @locations = {}
+
+    # load location ids, names and neighbours
+    path = @pack_folder + '/locations/locations.csv'
+    CSV.foreach(path, {col_sep: ";", encoding: "UTF-8"}) do |id, name, _, _, _, *neighbours|
+      next if id == "id" #skip the header line
+
+      @locations[id.to_i] = [name, neighbours.map(&:to_i)]
+    end
+
+    # add an empty ary for events
+    @locations.each_value { |ary| ary << [] }
+
+    Dir.open(@pack_folder + '/events/').each do |file|
+      next unless file =~ /.rb$/
+      require_relative @pack_folder + '/events/' + file
+    end
+    
+    @locations.each do |id, (name, neighbour_ids, events)|
+      # instantiate Location object with name, id and neighbour_ids and store it
+      @locations[id] = Location.new(id, name, neighbour_ids)
+    end
+    
+    # add events
+    Event::events.each do |event|
+      # setup event
+      event_obj = event.new
+      event_obj.setup!(self)
+    
+      if event.all?
+        @locations.each_value { |location| location.events << event_obj }
+      else
+        locations = @locations.values.find_all { |loc| event.names.include? loc.name }
+        locations.each { |location| location.events << event_obj }
+      end
     end
   end
 end

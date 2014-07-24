@@ -16,7 +16,26 @@
 # can be overridden to return true and it will be preferred to normal events
 
 class Event
-  attr_reader   :character, :text, :investigate, :hidden
+  @@events = []
+
+  # Adds event to all locations
+  def self.add_to_all
+    @all = true
+    @@events << self
+  end
+
+  # Adds event to all locations with names
+  def self.add_to(*names)
+    @all = false
+    @names = names
+    @@events << self
+  end
+
+  def self.events; @@events; end
+  def self.all?;   @all;   end
+  def self.names;  @names; end
+
+  attr_reader   :character, :text, :active, :passive
   attr_accessor :probability_points
 
   def initialize

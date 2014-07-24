@@ -3,8 +3,8 @@ class P0wn < Event
   def initialize
     @character = "FloMaster"
 
-    @investigate  = true
-    @hidden       = true
+    @active  = true
+    @passive = true
 
     @necessary    = false
 
@@ -20,15 +20,15 @@ class P0wn < Event
   end
 end
 
-LOCATIONS_HASH.add_to_all(P0wn)
+P0wn.add_to_all
 
 # sample event #2
 class Offer < Event
   def initialize
     @character = "Händler"
 
-    @investigate  = true
-    @hidden       = true
+    @active  = true
+    @passive = true
 
     @necessary    = true
 
@@ -50,4 +50,4 @@ class Offer < Event
   end
 end
 
-LOCATIONS_HASH.add_to(["Markt"], Offer)
+Offer.add_to "Markt"

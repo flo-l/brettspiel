@@ -1,9 +1,15 @@
+require 'csv'
+
 # key is id, value: [name, neighbour_ids, events]
-LOCATIONS_HASH = {
-  1 => ["HQ",    [2,3]],
-  2 => ["Markt", [1,3]],
-  3 => ["Arena", [1,2]]
-}
+LOCATIONS_HASH = {}
+
+# load location ids, names and neighbours
+path = File.expand_path File.dirname(__FILE__) + '/locations.csv'
+CSV.foreach(path, {col_sep: ";", encoding: "UTF-8"}) do |id, name, _, _, _, *neighbours|
+    next if id == "id" #skip the header line
+
+    LOCATIONS_HASH[id.to_i] = [name, neighbours.map(&:to_i)]
+end
 
 # add an empty ary for events
 LOCATIONS_HASH.each_value { |ary| ary << [] }

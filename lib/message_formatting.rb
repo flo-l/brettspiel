@@ -5,7 +5,7 @@ require 'json'
 module MessageFormatting
   # This tells a player that they have been registered
   def message_registered(player_id, player_name)
-    @response << {:type => "registered", "player_id" => player_id, "player_name" => player_name}.to_json
+    @response << {:type => "registered", "player_id" => player_id, "player_name" => player_name, "content_pack" => @pack_file}.to_json
   end
 
   # This should output the text

@@ -1,6 +1,7 @@
 require 'thin'
 require 'em-websocket'
 
+require_relative 'packer.rb'
 require_relative 'message.rb'
 require_relative 'game.rb'
 
@@ -17,6 +18,7 @@ class PlayerNameTakenError < UserInputError; nil; end
 class WrongPlayerMoveError < UserInputError; nil; end
 class ImpossibleResponseError < UserInputError; nil; end
 class LocationNotPresentError < UserInputError; nil; end
+class LocationNotReachableError < UserInputError; nil; end
 
 class GameAlreadyStartedError < ServerError; nil; end
 class GameNotStartedError < ServerError; nil; end
@@ -38,6 +40,12 @@ class Server
   def initialize
     # Hash with game_ids as keys and arrays of websocket_connections, aka clients as values
     @clients = {}
+    
+    puts "packing content"
+    
+    # build the content pack on server start
+    @pack_name = "dev-pack"
+    Packer.pack(@pack_name)
   end
 
   # send all messages in res_ary to all clients
@@ -86,7 +94,7 @@ class Server
 
   # Creates a new game
   def new_game
-    game = Game.new
+    game = Game.new(@pack_name)
     game.save!
     {:type => "game_created", :game_id => game.id}.to_json
   end
@@ -107,7 +115,7 @@ class Server
           begin
             handle(msg, ws)
           rescue ServerError => error
-            puts "SERVER ERROR: " + error.class
+            puts "SERVER ERROR: " + error.class.to_s
           rescue => e
             puts "GENERIC ERROR:"
             puts "#{e.backtrace.shift}: #{e.message} (#{e.class})", e.backtrace.map { |s| "        from " << s }

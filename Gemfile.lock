@@ -12,6 +12,7 @@ GEM
     http_parser.rb (0.5.3)
     json (1.8.1)
     rack (1.5.2)
+    rubyzip (1.1.6)
     thin (1.6.2)
       daemons (>= 1.0.9)
       eventmachine (>= 1.0.0)
@@ -25,4 +26,5 @@ DEPENDENCIES
   em-websocket
   em-websocket-client
   json
+  rubyzip
   thin

@@ -12,7 +12,7 @@ class Location
   attr_reader :name, :id, :neighbour_ids
   attr_accessor :events
 
-  def initialize(name, id, neighbour_ids)
+  def initialize(id, name, neighbour_ids)
     @name = name
     @id = id
     @neighbour_ids = neighbour_ids

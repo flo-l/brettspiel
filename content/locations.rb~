@@ -1,6 +1,0 @@
-LOCATIONS_ARY = [
-  Location.new("HQ",    1, [1,2]),
-  Location.new("Markt", 2, [0,2]),
-  Location.new("Arena", 3, [0,1])
-]
-

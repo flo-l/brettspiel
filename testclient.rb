@@ -1,5 +1,6 @@
 require 'em-websocket-client'
 require 'json'
+require 'csv'
 
 require_relative 'client_helpers.rb'
 require_relative './lib/message.rb'
@@ -14,12 +15,15 @@ class GameClient
   def initialize(port=2012)
     # Load the content
     # Characters:
-    require_relative 'content/characters.rb'
     @characters = {}
-    CHARACTERS_HASH.each { |id, name| @characters[id] = Character.new(name, id) }
-
+    
+    path = File.expand_path 'content/dev-pack/characters/characters.csv'
+    CSV.foreach(path, {col_sep: ";", headers: true, encoding: "UTF-8"}) do |row|
+        id, name = row.to_hash.values
+        @characters[id] = Character.new(id, name)
+    end
     # Locations:
-    require_relative 'content/locations.rb'
+    require_relative 'content/dev-pack/locations/locations.rb'
     @locations = {}
     LOCATIONS_HASH.each do |id, ary|
       # instantiate location object with name, id and neighbour_ids

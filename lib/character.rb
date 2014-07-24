@@ -2,11 +2,11 @@
 # Each Character has a name and an id assigned to them and may also store additional information in the object
 
 class Character
-  attr_reader :name, :id
+  attr_reader :id, :name
 
-  def initialize(name, id)
-    @name = name
+  def initialize(id, name)
     @id = id
+    @name = name
   end
 
   def to_s
