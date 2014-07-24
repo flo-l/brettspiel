@@ -32,8 +32,8 @@ class Event
   end
 
   def self.events; @@events; end
-  def self.all?;   @all;   end
-  def self.names;  @names; end
+  def self.all?;   @all;     end
+  def self.names;  @names;   end
 
   attr_reader   :character, :text, :active, :passive
   attr_accessor :probability_points

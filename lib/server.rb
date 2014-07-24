@@ -79,7 +79,7 @@ class Server
     if msg.type.to_sym == :join
       if @clients[msg.game_id]
         @clients[msg.game_id] << client unless @clients[msg.game_id].include? client
-      elsif
+      else
         @clients[msg.game_id] = [client]
       end
     end

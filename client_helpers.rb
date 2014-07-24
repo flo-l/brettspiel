@@ -62,7 +62,7 @@ module TCPMessages
   def message_registered(player_id, player_name)
     puts "You have been registered as player \##{player_id}, #{player_name}!"
     # Create Player object with name from hacky @player_names
-    @players << Player.new(@player_names.shift, player_id, @locations.values.first)
+    @players << Player.new(player_id, @player_names.shift, @locations.values.first)
 
     # join the next player
     join_player
@@ -136,7 +136,7 @@ class Player
   attr_reader :name, :id
   attr_accessor :current_location
 
-  def initialize(name, id, current_location)
+  def initialize(id, name, current_location)
     @name = name
     @id = id
     @current_location = current_location
@@ -164,7 +164,7 @@ class Location
   attr_reader :name, :id, :neighbour_ids
   attr_accessor :events
 
-  def initialize(name, id, neighbour_ids)
+  def initialize(id, name, neighbour_ids)
     @name = name
     @id = id
     @neighbour_ids = neighbour_ids

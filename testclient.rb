@@ -14,28 +14,45 @@ class GameClient
 
   def initialize(port=2012)
     # Load the content
-    # Characters:
-    @characters = {}
-    
-    path = File.expand_path 'content/dev-pack/characters/characters.csv'
-    CSV.foreach(path, {col_sep: ";", headers: true, encoding: "UTF-8"}) do |row|
-        id, name = row.to_hash.values
-        @characters[id] = Character.new(id, name)
-    end
-    # Locations:
-    require_relative 'content/dev-pack/locations/locations.rb'
-    @locations = {}
-    LOCATIONS_HASH.each do |id, ary|
-      # instantiate location object with name, id and neighbour_ids
-      location = Location.new(ary[0], id, ary[1])
+    @pack_folder = File.expand_path 'content/dev-pack' 
 
-      # store the location object
-      @locations[id] = location
-    end
+    # Characters:
+    load_characters
+    
+    # Locations:
+    load_locations
 
     @port = port
     @players = []
     @player_names = [] #dirty hack, fuck it..
+  end
+  
+  def load_characters
+    @characters = {}
+    
+    path = File.expand_path(@pack_folder + '/characters/characters.csv')
+    CSV.foreach(path, {col_sep: ";", headers: true, encoding: "UTF-8"}) do |row|
+      id, name = row.to_hash.values
+      @characters[id] = Character.new(id, name)
+    end
+  end
+  
+  def load_locations
+    # key is id, value: [name, neighbour_ids, events]
+    @locations = {}
+
+    # load location ids, names and neighbours
+    path = @pack_folder + '/locations/locations.csv'
+    CSV.foreach(path, {col_sep: ";", encoding: "UTF-8"}) do |id, name, _, _, _, *neighbours|
+      next if id == "id" #skip the header line
+
+      @locations[id.to_i] = [name, neighbours.map(&:to_i)]
+    end
+    
+    @locations.each do |id, (name, neighbour_ids)|
+      # instantiate Location object with name, id and neighbour_ids and store it
+      @locations[id] = Location.new(id, name, neighbour_ids)
+    end
   end
 
   def start!
