@@ -48,6 +48,8 @@ class Server
     Packer.pack(@pack_name)
   end
 
+  private
+  
   # send all messages in res_ary to all clients
   def send_to_all(game_id, res_ary)
     @clients[game_id].each do |client|
@@ -99,6 +101,8 @@ class Server
     {:type => "game_created", :game_id => game.id}.to_json
   end
 
+  public
+  
   # Start the Server and go!
   def start!
     puts "started"
