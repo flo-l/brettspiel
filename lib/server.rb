@@ -37,15 +37,20 @@ class EventMachine::WebSocket::Connection
 end
 
 class Server
+  # directory with content packs
+  PACK_DIR = Dir.open(File.expand_path 'content')
+  
   def initialize
     # Hash with game_ids as keys and arrays of websocket_connections, aka clients as values
     @clients = {}
     
-    puts "packing content"
+    # find available content-packs
+    @available_packs = PACK_DIR.each.reject{ |x| ['.', '..'].include? x }.to_a
     
-    # build the content pack on server start
-    @pack_name = "dev-pack"
-    Packer.pack(@pack_name)
+    puts "packing content:", @available_packs.map { |pack| "  => #{pack}" }, ""
+    
+    # build all content packs on server start
+    @available_packs.each { |pack| Packer.pack(pack) }
   end
 
   private
@@ -96,7 +101,7 @@ class Server
 
   # Creates a new game
   def new_game
-    game = Game.new(@pack_name)
+    game = Game.new(@available_packs.first)
     game.save!
     {:type => "game_created", :game_id => game.id}.to_json
   end
@@ -104,11 +109,11 @@ class Server
   public
   
   # Start the Server and go!
-  def start!
-    puts "started"
+  def start!(port=2012)
+    puts "listening on localhost:#{port}"
 
     EM.run do
-      EM::WebSocket.start(:host => '0.0.0.0', :port => '2012') do |ws|
+      EM::WebSocket.start(:host => '0.0.0.0', :port => port) do |ws|
         ws.onopen do |obj|
           puts "somebody connected!"
         end
