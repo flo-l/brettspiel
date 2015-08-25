@@ -1,0 +1,64 @@
+﻿<UserControl x:Class="Client.Frame.ConnectionControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" d:DesignWidth="300" Height="225"
+             >
+    <Grid Margin="2.5">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="55"/>
+            <RowDefinition Height="55"/>
+            <RowDefinition Height="110"/>
+        </Grid.RowDefinitions>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="40"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Label Content="Host: "/>
+            <TextBox Text="{Binding Host, Mode=TwoWay}" Grid.Column="1" Margin="2.5"/>
+            <Button Content="{Binding ConnectText}" Grid.ColumnSpan="2" Grid.Row="1" Margin="2.5" IsEnabled="{Binding ConnectEnabled}" Command="{Binding ConnectCommand}"/>
+        </Grid>
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="60"/>
+                <ColumnDefinition Width="85"/>
+                <ColumnDefinition Width="65"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Label Content="GameID:" />
+            <TextBox Text="{Binding GameID, Mode=TwoWay}" Margin="2.5" Grid.Column="1"/>
+            <Label Content="Theme:" Grid.Column="2"/>
+            <ComboBox ItemsSource="{Binding Themes}" SelectedItem="{Binding SelectedTheme, Mode=TwoWay}" Margin="2.5" Grid.Column="3"/>
+            <Button Content="Join" Margin="2.5" Grid.ColumnSpan="2" Grid.Row="1" IsEnabled="{Binding JoinEnabled}" Command="{Binding JoinCommand}"/>
+            <Button Content="Create" Margin="2.5" Grid.Column="2" Grid.Row="1" Grid.ColumnSpan="2" IsEnabled="{Binding CreateEnabled}" Command="{Binding CreateCommand}"/>
+        </Grid>
+        <Grid Grid.Row="2">
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="75"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Label Content="Playername: "/>
+            <TextBox Margin="2.5" Text="{Binding PlayerName, Mode=TwoWay}" Grid.Column="1"/>
+            <Button Content="Add Player" Margin="2.5" Grid.ColumnSpan="2" Grid.Row="1" IsEnabled="{Binding AddEnabled}" Command="{Binding AddCommand}"/>
+            <Button Content="Start" Margin="2.5" Grid.ColumnSpan="2" Grid.Row="2" IsEnabled="{Binding StartEnabled}" Command="{Binding StartCommand}"/>
+            <Label Content="{Binding Status}" Grid.ColumnSpan="2" Grid.Row="3"/>
+        </Grid>
+
+    </Grid>
+</UserControl>
