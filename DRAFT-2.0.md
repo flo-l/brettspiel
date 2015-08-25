@@ -1,4 +1,4 @@
-API Draft King Arthur v2.0
+API Draft Brettspiel v2.0
 =================================
 
 ###Message structure
