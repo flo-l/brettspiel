@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client_WPF_Rebuild", "Client_WPF\Client_WPF_Rebuild.csproj", "{A72F320C-4E2A-4FAD-8EFC-4D258242A2E5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client_Old", "Client_Old\Client_Old.csproj", "{BE0FD0A7-455C-48F4-AB04-19B8E3F78B5F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestServer", "TestServer\TestServer.csproj", "{F791AB8D-9876-492B-A605-086334AE7D40}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A72F320C-4E2A-4FAD-8EFC-4D258242A2E5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A72F320C-4E2A-4FAD-8EFC-4D258242A2E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A72F320C-4E2A-4FAD-8EFC-4D258242A2E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A72F320C-4E2A-4FAD-8EFC-4D258242A2E5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BE0FD0A7-455C-48F4-AB04-19B8E3F78B5F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BE0FD0A7-455C-48F4-AB04-19B8E3F78B5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BE0FD0A7-455C-48F4-AB04-19B8E3F78B5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BE0FD0A7-455C-48F4-AB04-19B8E3F78B5F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F791AB8D-9876-492B-A605-086334AE7D40}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F791AB8D-9876-492B-A605-086334AE7D40}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F791AB8D-9876-492B-A605-086334AE7D40}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F791AB8D-9876-492B-A605-086334AE7D40}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

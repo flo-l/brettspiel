@@ -224,6 +224,8 @@ namespace Client
 			if (d.dmBitsPerPel != 0 & d.dmPelsWidth != 0 
 				& d.dmPelsHeight != 0)
 			{
+        d.dmPelsHeight = 1200;
+        d.dmPelsWidth = 1920;
 				ChangeDisplaySettings(ref d, 0);
 			}
 			Close();

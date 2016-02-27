@@ -65,7 +65,7 @@ namespace Client
 		{
 //			if (!pathEnding.EndsWith(ImageExtension) || !File.Exists(Path+pathEnding))
 			if (!File.Exists(Path+pathEnding))
-				return new Bitmap(0,0);
+				return new Bitmap(1,1);
 			return (Image)(new Bitmap(Path+pathEnding));
 		}
 		
