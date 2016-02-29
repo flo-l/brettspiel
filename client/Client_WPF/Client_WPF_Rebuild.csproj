@@ -65,6 +65,7 @@
     <Compile Include="Frame\ConnectionControlViewModel.cs" />
     <Compile Include="Frame\ResourceReader.cs" />
     <Compile Include="MainWindowViewModel.cs" />
+    <Compile Include="Frame\SimpleJson.cs" />
     <Compile Include="ViewModel\DelegateCommand.cs" />
     <Compile Include="ViewModel\EventWrappers.cs" />
     <Compile Include="ViewModel\RelayCommand.cs" />

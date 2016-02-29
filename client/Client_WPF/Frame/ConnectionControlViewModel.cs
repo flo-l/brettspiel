@@ -108,6 +108,7 @@ namespace Client.Frame
       {
         try
         {
+          Host = "ws://127.0.0.1:2012"; //DEBUG
           Connection = new SocketModel(Host);
           IsHostUsed = true;
           ConnectText = "Abort";
@@ -140,13 +141,12 @@ namespace Client.Frame
 
       Status = "Connection established";
 
-      Connection.AddEvent("registered", regCommand);
-      Connection.AddEvent("game_created", gameCommand);
-      Connection.AddEvent("next", nextCommand);
-      Connection.AddEvent("pack_list", packCommand);
+//      Connection.AddEvent(typeof(Message), regCommand);
+//      Connection.AddEvent(typeof(Message), gameCommand);
+//      Connection.AddEvent("next", nextCommand);
+//      Connection.AddEvent("pack_list", packCommand);
 
-      Message msg = new Message("request_pack_list");
-      Connection.Send(msg);
+      Connection.Send(new RequestPackListMessage());
     }
 
     void regCommand(Message msg)
@@ -155,16 +155,16 @@ namespace Client.Frame
     }
     void gameCommand(Message msg)
     {
-      GameID = msg.Attributes["game_id"];
+ //     GameID = msg.Attributes["game_id"];
 
     }
-    void nextCommand(Message msg)
+    void nextCommand(InGameMessage msg)
     {
 
     }
     void packCommand(Message msg)
     {
-      string asdf = msg.Attributes["packs"];
+ //     string asdf = msg.Attributes["packs"];
     }
 
     public DelegateCommand ConnectCommand { get; private set; }

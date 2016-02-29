@@ -84,6 +84,11 @@ namespace SuperWebSocket.Samples.BasicConsole
             int.TryParse(Console.ReadLine(), out n1);
 
             MSG.Add("player_id", n1);
+
+           /* Dictionary<string, string> asdf = new Dictionary<string, string>();
+            asdf.Add("key1", "val1");
+            asdf.Add("key2", "val2");
+            MSG.Add("DEBUG", asdf);*/
             break;
           case 'm':
             MSG.Add("type", "move");
