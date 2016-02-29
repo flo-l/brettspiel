@@ -14,8 +14,9 @@ It should look like so:
 - All id fields are integers, not strings!!
 
 ###The server sends the following commands:
+- pack_list: packs=["pack1",...] => list of available contentpacks
 - game_created: game_id => A new game instance was successfully created.
-- registered: player_id, player_name => Player has joined the game
+- registered: player_id, player_name, content_pack => Player has joined the game. Corresponding client should download the given contentpack
 
 - text: text => Just print the text.
 - character: character_id, text => A character with id character_id says some text.
@@ -36,6 +37,8 @@ It should look like so:
 
 ###The Client sends the following commands:
 (game_id is a string needed by the server to find the correct game instance)
+- request_pack_list => asks server which content packs are available
+
 - new_game => asks the server to create a new game instance.
 
 - join: game_id, name => Player with name want's to join
