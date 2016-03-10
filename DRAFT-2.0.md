@@ -42,7 +42,7 @@ It should look like so:
 
 - start: game_id => All players are registered, the game can start
 
-- answer: game_id, answer => The answer of the asked player, an INTEGER from 1 to amount of possibilities of the question
+- answer: game_id, answer => The answer of the asked player, an INTEGER from 0 to amount of possibilities of the question - 1
 
 - move_request: game_id, player_id, location_id => Player want's to move to the localisation with localisation_id. "0" means stay.
 

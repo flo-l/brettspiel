@@ -1,6 +1,7 @@
 require 'securerandom'
 require 'csv'
 
+require_relative 'message'
 require_relative 'message_formatting.rb'
 require_relative 'character.rb'
 require_relative 'event.rb'

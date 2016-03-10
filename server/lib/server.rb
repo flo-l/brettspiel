@@ -2,7 +2,6 @@ require 'thin'
 require 'em-websocket'
 
 require_relative 'packer.rb'
-require_relative 'message.rb'
 require_relative 'game.rb'
 
 # Exceptions
@@ -36,6 +35,8 @@ class EventMachine::WebSocket::Connection
   end
 end
 
+# this is a server which accepts commands (messages) via websockets.
+# it is capable of managing many games simultaniously
 class Server
   # directory with content packs
   PACK_DIR = Dir.open(File.expand_path 'content')
