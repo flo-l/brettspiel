@@ -1,6 +1,10 @@
 API Draft Brettspiel v2.0
 =================================
 
+###Suggestions
+ - broadcast currently available games (whichor are currently paused or haven't begun yet) to all clients which aren't currently involved in an active game
+ - messages to revert join requests etc.
+
 ###Message structure
 Every message is encoded in JSON.
 
