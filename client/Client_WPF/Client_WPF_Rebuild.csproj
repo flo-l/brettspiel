@@ -83,7 +83,7 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Frame\ConnectionControl.cs" />
+    <Compile Include="Frame\Connection.cs" />
     <Compile Include="Frame\DisplayManager.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>

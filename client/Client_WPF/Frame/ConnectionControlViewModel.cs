@@ -13,9 +13,49 @@ namespace Client.Frame
     #region Control Properties
     public string Host { get; set; }
     public string PlayerName { get; set; }
-    public string GameID { get; set; }
-    public List<string> Themes { get; set; }
-    public string SelectedTheme { get; set; }
+    public string GameID 
+    { 
+      get
+      {
+        if (Connection != null)
+          return Connection.GameID;
+        return "";
+      }
+      set
+      {
+        if (Connection != null)
+          Connection.GameID = value;
+      }
+    }
+
+    List<string> Themes_ = new List<string>();
+    public List<string> Themes
+    {
+      get
+      {
+        return Themes_;
+      }
+      private set
+      {
+        Themes_ = value;
+        OnPropertyChanged("Themes");
+
+        if (Themes_ != null && Themes_.Count > 0)
+          SelectedTheme = Themes_[0];
+
+      }
+    }
+    string SelectedTheme_;
+
+    public string SelectedTheme
+    {
+      get { return SelectedTheme_; }
+      set
+      {
+        SelectedTheme_ = value;
+        OnPropertyChanged("SelectedTheme");
+      }
+    }
 
     string Status_;
     public string Status
@@ -101,7 +141,47 @@ namespace Client.Frame
 
     bool IsHostUsed = false;
 
+    //TODO Check flow of registration commands
     #region Commands
+    void Socket_Opened(object sender, EventArgs e)
+    {
+      ConnectEnabled = false;
+      CreateEnabled = true;
+      JoinEnabled = true;
+
+      Status = "Connection established";
+
+      Connection.AddEvent<PackListMessage>(packCommand);
+
+      Connection.Send(new RequestPackListMessage());
+    }
+
+    void regCommand(RegisteredMessage msg)
+    {
+      Status = msg.PlayerName + " joined the game";
+    }
+    void gameCreatedCommand(GameCreatedMessage msg)
+    {
+      GameID = msg.GameID;
+
+      JoinEnabled = false;
+      CreateEnabled = false;
+      AddEnabled = true;
+      StartEnabled = true;
+
+      Connection.RemoveEvent<GameCreatedMessage>(gameCreatedCommand);
+      Connection.AddEvent<RegisteredMessage>(regCommand);
+    }
+    void nextCommand(NextMessage msg)
+    {
+      
+    }
+    void packCommand(PackListMessage msg)
+    {
+      Themes = msg.Packs;
+      Connection.RemoveEvent<PackListMessage>(packCommand);
+    }
+
     void ConnectCommand_()
     {
       if (!IsHostUsed)
@@ -111,10 +191,11 @@ namespace Client.Frame
           Host = "ws://127.0.0.1:2012"; //DEBUG
           Connection = new SocketModel(Host);
           IsHostUsed = true;
-          ConnectText = "Abort";
-          Status = "Connecting...";
 
           Connection.Opened += Socket_Opened;
+          Connection.Open();
+          ConnectText = "Abort";
+          Status = "Connecting...";
         }
         catch
         {
@@ -133,59 +214,38 @@ namespace Client.Frame
         Connection.Dispose();
       }
     }
-    void Socket_Opened(object sender, EventArgs e)
-    {
-      ConnectEnabled = false;
-      CreateEnabled = true;
-      JoinEnabled = true;
-
-      Status = "Connection established";
-
-//      Connection.AddEvent(typeof(Message), regCommand);
-//      Connection.AddEvent(typeof(Message), gameCommand);
-//      Connection.AddEvent("next", nextCommand);
-//      Connection.AddEvent("pack_list", packCommand);
-
-      Connection.Send(new RequestPackListMessage());
-    }
-
-    void regCommand(Message msg)
-    {
-
-    }
-    void gameCommand(Message msg)
-    {
- //     GameID = msg.Attributes["game_id"];
-
-    }
-    void nextCommand(InGameMessage msg)
-    {
-
-    }
-    void packCommand(Message msg)
-    {
- //     string asdf = msg.Attributes["packs"];
-    }
-
     public DelegateCommand ConnectCommand { get; private set; }
     void JoinCommand_()
     {
+      CreateEnabled = false;
+      JoinEnabled = false;
+      AddEnabled = true;
 
+      Connection.AddEvent<RegisteredMessage>(regCommand);
+      Connection.AddEvent<NextMessage>(nextCommand);
     }
     public DelegateCommand JoinCommand { get; private set; }
     void CreateCommand_()
     {
+      Connection.AddEvent<GameCreatedMessage>(gameCreatedCommand);
 
+      NewGameMessage msg = new NewGameMessage();
+      msg.ContentPack = SelectedTheme;
+      Connection.Send(msg);
     }
     public DelegateCommand CreateCommand { get; private set; }
     void AddCommand_()
     {
-
+      JoinMessage msg = new JoinMessage();
+      msg.PlayerName = PlayerName;
+      Connection.Send(msg);
     }
     public DelegateCommand AddCommand { get; private set; }
     void StartCommand_()
     {
-
+      Connection.Send(new StartMessage());
+      Connection.AddEvent<NextMessage>(nextCommand);
+      Connection.RemoveEvent<RegisteredMessage>(regCommand);
     }
     public DelegateCommand StartCommand { get; private set; }
 

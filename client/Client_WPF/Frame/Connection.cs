@@ -10,6 +10,8 @@ using System.Collections;
 
 namespace Client
 {
+
+  #region helpers
   [AttributeUsage(AttributeTargets.Property)]
   public class JsonExportAttribute : Attribute
   {
@@ -45,8 +47,49 @@ namespace Client
     }
   }
 
+  class ActionDictionary
+  {
+    Dictionary<Type, List<dynamic>> dict = new Dictionary<Type, List<dynamic>>();
+
+    public void Add<T>(Action<T> action)
+    {
+      Type type = typeof(T);
+      if (!dict.ContainsKey(type))
+      {
+        dict.Add(type, new List<dynamic>());
+      }
+
+      dict[type].Add(action);
+    }
+
+    public void Remove<T>(Action<T> action)
+    {
+      Type type = typeof(T);
+      if (!dict.ContainsKey(type))
+        return;
+      dict[type].Remove(action);
+      if (dict[type].Count == 0)
+        dict.Remove(type);
+    }
+
+    public void Invoke(object args)
+    {
+      if (dict.ContainsKey(args.GetType()))
+      {
+        foreach (dynamic action in dict[args.GetType()])
+        {
+          action.Invoke((dynamic)args);
+          if (!dict.ContainsKey(args.GetType()))
+            break;
+        }
+      }
+    }
+  }
+#endregion
+
   #region messages
 
+  #region Base
   public abstract class Message
   {
     [JsonExport("type")]
@@ -54,82 +97,111 @@ namespace Client
 
     //TODO maybe put this in a separate attribute with class as target
     //TODO replace try catch with proper errorhandling / exceptions
-    //TODO implement nested classes, dictionairies / handle json objs and json arrays
-    public static Message Deserialize(JsonObject obj)
+    //TODO implement nested classes / handle json objs and json arrays
+    public static bool Deserialize(JsonObject obj, out Message msg)
     {
       Init();
+
+      msg = null;
+
+      string MessageType;
       try
       {
-        foreach (Type t in MessageTypes)
-        {
-          Message Output = (Message)Activator.CreateInstance(t);
-          if (Output.Type == (string)obj["type"])
-          {
-            foreach (PropertyInfo p in t.GetRuntimeProperties())
-            {
-              JsonExportAttribute attr = (JsonExportAttribute)Attribute.GetCustomAttribute(p, typeof(JsonExportAttribute));
-              if (attr == null || attr.name == "type")
-                continue;
-
-              object ObjectBuf;
-
-              try
-              {
-                ObjectBuf = obj[attr.name];
-              }
-              catch
-              {
-                //DEBUG
-                Console.WriteLine("Couldn't deserialize to " + t.ToString() + " , because a property was missing");
-                Console.WriteLine(obj);
-                return null;
-              }
-              try
-              {
-                if (typeof(IEnumerable<object>).IsAssignableFrom(p.PropertyType))
-                //if (typeof(IEnumerable).IsAssignableFrom(p.PropertyType))
-                {
-                  Type[] ContainedTypes = p.PropertyType.GetGenericArguments();
-                  bool asdf = typeof(ICollection<>).MakeGenericType(ContainedTypes).IsAssignableFrom(p.PropertyType);
-                  if (ObjectBuf is JsonArray && typeof(ICollection<>).MakeGenericType(ContainedTypes).IsAssignableFrom(p.PropertyType))
-                  {
-                    JsonArray JsonArray = (ObjectBuf as JsonArray);
-                    if (JsonArray.Count != 0 && ContainedTypes[0].IsAssignableFrom(JsonArray[0].GetType()))
-                    {
-                      dynamic Collection = (dynamic)Activator.CreateInstance(p.PropertyType);
-                      foreach (object o in JsonArray)
-                      {
-                        dynamic added = Convert.ChangeType(o, ContainedTypes[0]);
-                        Collection.Add(added);
-                      }
-                      ObjectBuf = Collection;
-                    }
-                  }
-                }
-                p.SetValue(Output, Convert.ChangeType(ObjectBuf, p.PropertyType));
-              }
-              catch
-              {
-                //DEBUG
-                Console.WriteLine("Couldn't deserialize to " + t.ToString() + " , because conversion from " + ObjectBuf.GetType().ToString() + " to " + p.PropertyType.ToString() + " was not possible");
-                Console.WriteLine(obj);
-                return null;
-              }
-            }
-            return Output;
-          }
-        }
+        MessageType = (string)obj["type"];
       }
       catch
       {
         //DEBUG
         Console.WriteLine("Couldn't deserialize, because type was missing");
         Console.WriteLine(obj);
+        return false;
       }
-      //DEBUG
+
+      foreach (Type t in MessageTypes)
+      {
+        Message Output = (Message)Activator.CreateInstance(t);
+
+        if (Output.Type == (string)obj["type"])
+        {
+          foreach (PropertyInfo p in t.GetRuntimeProperties())
+          {
+            JsonExportAttribute attr = (JsonExportAttribute)Attribute.GetCustomAttribute(p, typeof(JsonExportAttribute));
+            if (attr == null || attr.name == "type")
+              continue;
+
+            object ObjectBuf;
+
+            try
+            {
+              ObjectBuf = obj[attr.name];
+            }
+            catch
+            {
+              //DEBUG
+              Console.WriteLine("Couldn't deserialize to " + t.ToString() + " , because a property was missing");
+              Console.WriteLine(obj);
+              return false;
+            }
+            if (typeof(ICollection).IsAssignableFrom(p.PropertyType) && p.PropertyType.IsGenericType && ObjectBuf is JsonArray)
+            {
+              JsonArray JsonArray = (ObjectBuf as JsonArray);
+
+              if (JsonArray.Count == 0)
+              {
+                ObjectBuf = Activator.CreateInstance(p.PropertyType);
+              }
+              else
+              {
+                Type[] ContainedTypes = p.PropertyType.GetGenericArguments();
+                if (ContainedTypes.Length == 1 && typeof(ICollection<>).MakeGenericType(ContainedTypes).IsAssignableFrom(p.PropertyType))
+                {
+                  if (ContainedTypes[0].IsAssignableFrom(JsonArray[0].GetType()))
+                  {
+                    dynamic Collection = (dynamic)Activator.CreateInstance(p.PropertyType);
+                    foreach (object o in JsonArray)
+                    {
+                      dynamic added = Convert.ChangeType(o, ContainedTypes[0]);
+                      Collection.Add(added);
+                    }
+                    ObjectBuf = Collection;
+                  }
+                }
+                if (ContainedTypes.Length == 2 && typeof(IDictionary<,>).MakeGenericType(ContainedTypes).IsAssignableFrom(p.PropertyType))
+                {
+                  if (ContainedTypes[0].IsAssignableFrom((JsonArray[0] as JsonObject)["Key"].GetType()) && 
+                      ContainedTypes[1].IsAssignableFrom((JsonArray[0] as JsonObject)["Value"].GetType()))
+                  {
+                    dynamic Dict = (dynamic)Activator.CreateInstance(p.PropertyType);
+                    foreach (object o in JsonArray)
+                    {
+                      JsonObject JsonObject = o as JsonObject;
+                      Dict.Add((dynamic)JsonObject["Key"], (dynamic)JsonObject["Value"]);
+                    }
+                    ObjectBuf = Dict;
+                  }
+                }
+              }
+            }
+            try
+            {
+              p.SetValue(Output, Convert.ChangeType(ObjectBuf, p.PropertyType));
+            }
+            catch
+            {
+              //DEBUG
+              Console.WriteLine("Couldn't deserialize to " + t.ToString() + " , because conversion from " + ObjectBuf.GetType().ToString() + " to " + p.PropertyType.ToString() + " was not possible");
+              Console.WriteLine(obj);
+              return false;
+            }
+          }
+
+          msg = Output;
+          return true;
+        }
+      }
       Console.WriteLine("Couldn't deserialize, because the given type doesn't exist");
       Console.WriteLine(obj);
-      return null;
+      return false;
     }
 
     static List<Type> MessageTypes;
@@ -148,7 +220,9 @@ namespace Client
   {
   }
 
-  //Server
+  #endregion
+
+  #region Server
   public class PackListMessage : Message
   {
     [JsonExport("packs")]
@@ -207,10 +281,6 @@ namespace Client
 
     [JsonExport("player_id")]
     public int PlayerID { get; set; }
-
-    //TODO Remove
-    [JsonExport("DEBUG")]
-    public Dictionary<string, string> DEBUG { get; set; }
   }
   public class MoveMessage : Message
   {
@@ -280,8 +350,19 @@ namespace Client
     [JsonExport("player_id")]
     public int PlayerID { get; set; }
   }
+#endregion
 
-  //Client
+  #region Client
+  public class NewGameMessage : Message
+  {
+    public override string Type
+    {
+      get { return "new_game"; }
+    }
+
+    [JsonExport("content_pack")]
+    public string ContentPack { get; set; }
+  }
   public class RequestPackListMessage : Message
   {
     public override string Type
@@ -296,7 +377,7 @@ namespace Client
       get { return "join"; }
     }
 
-    [JsonExport("player_name")] //TODO check if JoinMessage is implemented the same way in ruby
+    [JsonExport("name")] //TODO check if JoinMessage is implemented the same way in ruby
     public string PlayerName { get; set; }
   }
   public class StartMessage : InGameMessage
@@ -329,9 +410,11 @@ namespace Client
     [JsonExport("location_id")]
     public int LocationID { get; set; }
   }
+#endregion
 
   #endregion
 
+  #region Socket
   public class SocketModel : IDisposable
   {
     WebSocket Socket;
@@ -372,7 +455,7 @@ namespace Client
       }
     }
 
-    private string GameID_; // The Game ID at the server
+    private string GameID_ = ""; // The Game ID at the server
     private bool GameIDSet = false;
     public string GameID
     {
@@ -396,63 +479,53 @@ namespace Client
     {
       Host_ = uri;
       Socket = new WebSocket(Host);
-      Socket.Open();
 
-      MessageRecievedActions = new Dictionary<Type, List<Action<Message>>>();
+      MessageRecievedActions = new ActionDictionary();
       Socket.MessageReceived += Socket_MessageReceived;
+    }
+
+    public void Open()
+    {
+      Socket.Open();
     }
 
     public void Dispose()
     {
       Socket.Dispose();
-      MessageRecievedActions = new Dictionary<Type, List<Action<Message>>>();
+      MessageRecievedActions = new ActionDictionary();
     }
     #endregion
 
     #region events & wrappers
 
-    Dictionary<Type, List<Action<Message>>> MessageRecievedActions;
+    ActionDictionary MessageRecievedActions;
     void Socket_MessageReceived(object sender, MessageReceivedEventArgs e)
     {
-      
       object BUF;
       Message msg;
-      if (SimpleJson.SimpleJson.TryDeserializeObject(e.Message, out BUF))
-      {
-        msg = Message.Deserialize((JsonObject)BUF);
-      }
-      else
+      if (!SimpleJson.SimpleJson.TryDeserializeObject(e.Message, out BUF))
       {
         //DEBUG
         Console.WriteLine("Deserialization to JsonObject failed");
         return;
       }
-
-      if (msg == null || !MessageRecievedActions.ContainsKey(msg.GetType()))
-        return;
-
-      foreach (Action<Message> a in MessageRecievedActions[msg.GetType()])
+      if (!Message.Deserialize((JsonObject)BUF, out msg))
       {
-        a.Invoke(msg);
-      }
-    }
-
-
-    public void AddEvent<T>(Action<Message> action) where T : Message
-    {
-      Type type = typeof(T);
-      if (!MessageRecievedActions.ContainsKey(type))
-        MessageRecievedActions.Add(type, new List<Action<Message>>());
-
-      MessageRecievedActions[type].Add(action);
-    }
-
-    public void RemoveEvent<T>(Action<Message> action) where T : Message
-    {
-      Type type = typeof(T);
-      if (!MessageRecievedActions.ContainsKey(type))
         return;
-      MessageRecievedActions[type].Remove(action);
+      }
+
+      MessageRecievedActions.Invoke(msg);
+    }
+
+
+    public void AddEvent<T>(Action<T> action) where T : Message
+    {
+      MessageRecievedActions.Add<T>(action);
+    }
+
+    public void RemoveEvent<T>(Action<T> action) where T : Message
+    {
+      MessageRecievedActions.Remove<T>(action);
     }
 
     public event EventHandler Opened 
@@ -477,4 +550,6 @@ namespace Client
       Socket.Send(SimpleJson.SimpleJson.SerializeObject(msg));
     }
   }
+#endregion
+
 }
