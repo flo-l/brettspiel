@@ -46,6 +46,9 @@ namespace SuperWebSocket.Samples.BasicConsole
         {
           case 'q':
             goto quit;
+          case 'd':
+            //Debug
+            break;
           case 'g':
             MSG.Add("type", "change_cards");
             int[] resources = new int[] { 0, 0, 0, 0 };
