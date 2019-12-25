@@ -226,20 +226,20 @@ class Game
     CSV.foreach(path, {col_sep: ";", encoding: "UTF-8"}) do |id, name, _, _, _, *neighbours|
       next if id == "id" #skip the header line
 
-      @locations[id.to_i] = [name, neighbours.map(&:to_i)]
-    end
+      id = id.to_i
+      neighbour_ids = neighbours.map(&:to_i)
+      # instantiate Location object with name, id and neighbour_ids
+      location = Location.new(id, name, neighbour_ids)
 
-    # add an empty ary for events
-    @locations.each_value { |ary| ary << [] }
+      @locations[id] = location
+
+      # add a constant for each location to the global scope
+      Kernel.const_set(name, location)
+    end
 
     Dir.open(@pack_folder + '/events/').each do |file|
       next unless file =~ /.rb$/
       require_relative @pack_folder + '/events/' + file
-    end
-
-    @locations.each do |id, (name, neighbour_ids, events)|
-      # instantiate Location object with name, id and neighbour_ids and store it
-      @locations[id] = Location.new(id, name, neighbour_ids)
     end
 
     # add events
@@ -251,8 +251,7 @@ class Game
       if event.all?
         @locations.each_value { |location| location.events << event_obj }
       else
-        locations = @locations.values.find_all { |loc| event.names.include? loc.name }
-        locations.each { |location| location.events << event_obj }
+        event.locations.each { |location| location.events << event_obj }
       end
     end
   end

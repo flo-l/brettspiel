@@ -24,16 +24,16 @@ class Event
     @@events << self
   end
 
-  # Adds event to all locations with names
-  def self.add_to(*names)
+  # Adds event to all locations
+  def self.add_to(*locations)
     @all = false
-    @names = names
+    @locations = locations
     @@events << self
   end
 
-  def self.events; @@events; end
-  def self.all?;   @all;     end
-  def self.names;  @names;   end
+  def self.events   ; @@events  ; end
+  def self.all?     ; @all      ; end
+  def self.locations; @locations; end
 
   attr_reader   :character, :text, :active, :passive
   attr_accessor :probability_points

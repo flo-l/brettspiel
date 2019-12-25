@@ -20,7 +20,7 @@ class P0wn < Event
   end
 end
 
-P0wn.add_to "MainStage"
+P0wn.add_to MainStage
 
 # sample event #2
 class Offer < Event
@@ -50,7 +50,7 @@ class Offer < Event
   end
 end
 
-Offer.add_to "Markt"
+Offer.add_to Markt
 
 class FiberTest < Event
   def initialize
@@ -75,4 +75,4 @@ class FiberTest < Event
   end
 end
 
-FiberTest.add_to "HexenHaus"
+FiberTest.add_to HexenHaus
