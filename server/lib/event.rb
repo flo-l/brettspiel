@@ -45,10 +45,6 @@ class Event
 
   # called once after instantiation
   def setup!(game)
-    # exchange the character name (string) with the actual character object
-    character = game.characters.values.find { |character| character.name == @character }
-    @character = character
-    @character_id = @character.id
   end
 
   #any event can happen by default, may be overridden
@@ -74,14 +70,14 @@ class Event
   # player which they choose. It returns the key of the selected option
   def ask(player, question, options)
     raise ProgrammerError unless player.is_a? Player and options.is_a? Hash
-    @game.message_question(player.id, @character_id, question, options)
+    @game.message_question(player.id, @character.id, question, options)
   end
 
   # Replaces the normal puts with a puts that sends a message from
   # the character of the event to the player
   def puts(*args)
     args.each do |obj|
-      @game.message_character(@character_id, obj.to_s)
+      @game.message_character(@character.id, obj.to_s)
     end
   end
 end

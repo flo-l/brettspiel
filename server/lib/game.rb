@@ -214,6 +214,9 @@ class Game
     CSV.foreach(path, {col_sep: ";", headers: true, encoding: "UTF-8"}) do |row|
       id, name = row.to_hash.values
       @characters[id] = Character.new(id, name)
+
+      # add a constant for each character to the global scope
+      Kernel.const_set(name, @characters[id])
     end
   end
 
@@ -242,7 +245,7 @@ class Game
       require_relative @pack_folder + '/events/' + file
     end
 
-    # add events
+    # add events and call setup!
     Event::events.each do |event|
       # setup event
       event_obj = event.new

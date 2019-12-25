@@ -1,7 +1,7 @@
 # sample event #1
 class P0wn < Event
   def initialize
-    @character = "FloMaster"
+    @character = FloMaster
 
     @active  = true
     @passive = true
@@ -25,7 +25,7 @@ P0wn.add_to MainStage
 # sample event #2
 class Offer < Event
   def initialize
-    @character = "Händler"
+    @character = Händler
 
     @active  = true
     @passive = true
@@ -54,7 +54,7 @@ Offer.add_to Markt
 
 class FiberTest < Event
   def initialize
-    @character = "Händler"
+    @character = Hexe
 
     @active  = true
     @passive = true
