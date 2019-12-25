@@ -40,7 +40,12 @@ class FakeArduino
   def buttons_changed
     loop do
       print "Toggle: "
-      n = gets.to_i
+      input = gets
+      if input == "\n"
+        puts @buttons.each_with_index.select{ |s,i| s }.map{|_,i| i}.join
+        next
+      end
+      n = input.to_i
       next unless n
       @buttons[n] = !@buttons[n]
       @buttons.map! { |x| x.nil? ? false : x }

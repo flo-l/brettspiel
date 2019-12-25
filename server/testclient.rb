@@ -14,11 +14,11 @@ class GameClient
 
   def initialize(port=2012)
     # Load the content
-    @pack_folder = File.expand_path 'content/dev-pack' 
+    @pack_folder = File.expand_path 'content/dev-pack'
 
     # Characters:
     load_characters
-    
+
     # Locations:
     load_locations
 
@@ -26,17 +26,17 @@ class GameClient
     @players = []
     @player_names = [] #dirty hack, fuck it..
   end
-  
+
   def load_characters
     @characters = {}
-    
+
     path = File.expand_path(@pack_folder + '/characters/characters.csv')
     CSV.foreach(path, {col_sep: ";", headers: true, encoding: "UTF-8"}) do |row|
       id, name = row.to_hash.values
       @characters[id] = Character.new(id, name)
     end
   end
-  
+
   def load_locations
     # key is id, value: [name, neighbour_ids, events]
     @locations = {}
@@ -48,7 +48,7 @@ class GameClient
 
       @locations[id.to_i] = [name, neighbours.map(&:to_i)]
     end
-    
+
     @locations.each do |id, (name, neighbour_ids)|
       # instantiate Location object with name, id and neighbour_ids and store it
       @locations[id] = Location.new(id, name, neighbour_ids)
@@ -61,7 +61,7 @@ class GameClient
     EM.run do
       # Open up the connection
       #@socket = EventMachine::WebSocketClient.connect("ws://localhost:#{@port}")
-      @socket = EventMachine::WebSocketClient.connect("ws://localhost:2012")
+      @socket = EventMachine::WebSocketClient.connect("ws://0.0.0.0:2012")
       #@socket = EventMachine::WebSocketClient.connect("ws://192.168.0.12:2012")
 
       # An alias of send_msg

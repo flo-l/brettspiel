@@ -128,17 +128,17 @@ class Driver
 
     changed = []
     loop do
-        # read which button(s) changed
-        changed = buttons_changed
+      # read which button(s) changed
+      changed = buttons_changed
 
-        # ignore buttons which don't map to locations
-        changed.select! { |id,_| LOCATION_BUTTONS.keys.member? id }
+      # ignore buttons which don't map to locations
+      changed.select! { |id,_| LOCATION_BUTTONS.keys.member? id }
 
-        # ignore button releases
-        changed.select! { |_, pressed| pressed }
+      # ignore button releases
+      changed.select! { |_, pressed| pressed }
 
-        raise TooManyButtonsPressedError if changed.count > 1
-        break unless changed.empty?
+      raise TooManyButtonsPressedError if changed.count > 1
+      break unless changed.empty?
     end
 
     button_id, state = *changed[0]

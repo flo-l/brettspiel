@@ -20,7 +20,7 @@ class P0wn < Event
   end
 end
 
-P0wn.add_to_all
+P0wn.add_to "MainStage"
 
 # sample event #2
 class Offer < Event
@@ -51,3 +51,28 @@ class Offer < Event
 end
 
 Offer.add_to "Markt"
+
+class FiberTest < Event
+  def initialize
+    @character = "Händler"
+
+    @active  = true
+    @passive = true
+
+    @necessary    = true
+
+    @probability_points = 10
+
+    @text = "Test Event!"
+  end
+
+  def occur!
+    r = rand
+    puts r
+    x = ask(@game.current_player, "ready?", {'YES' => 'yes', 'NO' => 'no'})
+    puts r
+    puts x
+  end
+end
+
+FiberTest.add_to "HexenHaus"

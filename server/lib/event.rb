@@ -74,17 +74,10 @@ class Event
   # player which they choose. It returns the key of the selected option
   def ask(player, question, options)
     raise ProgrammerError unless player.is_a? Player and options.is_a? Hash
-
-    if @game.answers_buffer.empty?
-      # ask for the answer if we don't have it
-      @game.message_question(player.id, @character_id, question, options)
-    else
-      # return the answer if we have it
-      @game.answers_buffer.shift
-    end
+    @game.message_question(player.id, @character_id, question, options)
   end
 
-  # Replaces the normal puts with a puts that sends a message from 
+  # Replaces the normal puts with a puts that sends a message from
   # the character of the event to the player
   def puts(*args)
     args.each do |obj|

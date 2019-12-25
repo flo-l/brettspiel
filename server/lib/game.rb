@@ -35,17 +35,14 @@ class Game
     # content pack management
     @pack_folder = File.expand_path('content/' << pack_name)
     @pack_file   = pack_name
-    
+
     # player things
     @players = []
     @next_player = nil
 
     # responses for the client
+    # the server is expected to clear the responses if it sent them
     @response = []
-
-    # answers (actually their keys) already given by the client
-    @answers = []
-    @answers_buffer = []
 
     # the current event, in case the game must be marshalled and loaded again during the execution
     # of the event code. Eg: during a question.
@@ -81,10 +78,18 @@ class Game
     target.close
   end
 
+  # This handles messages infinitely. It yields requests from the game and expects to be passed the response via Fiber.resume
+  def main_loop(msg)
+    loop do
+      msg = Fiber.yield handle(msg)
+    end
+  end
+
+  private
+
   # This handles a message and returns the response(s) in an array
   def handle(msg)
-    # clear the response buffer
-    @response.clear
+    raise ProgrammerError unless @response.empty? # expect response to be cleared
 
     if [:join, :start].member? msg.type.to_sym
       # Check that the game has not already started
@@ -95,32 +100,23 @@ class Game
       else
         start
       end
+    elsif msg.type.to_sym == :answer
+      raise InvalidMessageError
+    elsif msg.type.to_sym == :move_request
+      # Check that the game has already started
+      raise GameNotStartedError if not @started
 
-    elsif [:answer, :move_request].member? msg.type.to_sym
-      # in case an answer from the client is needed
-      catch :stop do
+      # check if the mode is present and valid
+      if msg.respond_to? :mode
+        mode = msg.mode.to_sym
 
-        # Check that the game has already started
-        raise GameNotStartedError if not @started
-
-        if msg.type.to_sym == :answer      
-          resume(msg.answer)
-        else
-          # check if the mode is present and valid
-          if msg.respond_to? :mode
-            mode = msg.mode.to_sym
-            
-            # check if the mode is valid
-            raise InvalidMessageError unless [:active, :passive].include? mode
-          
-          else
-            raise InvalidMessageError
-          end
-          
-          do_round(msg.player_id, msg.location_id, mode)
-        end
+        # check if the mode is valid
+        raise InvalidMessageError unless [:active, :passive].include? mode
+      else
+        raise InvalidMessageError
       end
 
+      do_round(msg.player_id, msg.location_id, mode)
     else
       raise MessageTypeUnknownError, msg.type.to_sym
     end
@@ -128,7 +124,6 @@ class Game
     @response
   end
 
-  private
   ## Internal methods, not part of the event API
   # Add a player to the game
   def join(name)
@@ -159,26 +154,6 @@ class Game
     @players.each { |player| player.prepare! }
   end
 
-  # Resume execution of the event after a question
-  def resume(answer_index) # 0-indexed
-    # check if the answer_index is out of bounds
-    raise ImpossibleResponseError unless (0...@options_buffer.count).include? answer_index
-
-    # add the answer to the buffer
-    answer_key = @options_buffer[answer_index]
-
-    @answers << answer_key
-
-    # buffer so one can pop shift the answers atop the ary
-    @answers_buffer = @answers.dup
-
-    # resume the execution of the event code
-    @current_event.prepare_and_occur!(self)
-
-    # set next player etc.
-    end_round
-  end
-
   # Starts a round of the game, given the player and a location they want to visit
   def do_round(player_id, location_id, mode)
     # check if the right player wants to move
@@ -187,7 +162,7 @@ class Game
     # resolve the location_id
     location = @locations[location_id]
     raise LocationNotPresentError unless location
-    
+
     # check if new location is reachable from the old location
     old_location = @current_player.current_location
     raise LocationNotReachableError unless (old_location.neighbour_ids + [old_location.id]).include? location.id
@@ -197,7 +172,7 @@ class Game
 
     # select an event to occur
     @current_event = location.select_event(self, mode)
-    
+
     # let it occur
     @current_event.prepare_and_occur!(self)
 
@@ -206,10 +181,6 @@ class Game
   end
 
   def end_round
-    # we don't need these anymore
-    @answers.clear
-    @answers_buffer.clear
-
     # set next player as @current_player
     set_next_player
 
@@ -238,7 +209,7 @@ class Game
   # content loading
   def load_characters
     @characters = {}
-    
+
     path = File.expand_path(@pack_folder + '/characters/characters.csv')
     CSV.foreach(path, {col_sep: ";", headers: true, encoding: "UTF-8"}) do |row|
       id, name = row.to_hash.values
@@ -265,18 +236,18 @@ class Game
       next unless file =~ /.rb$/
       require_relative @pack_folder + '/events/' + file
     end
-    
+
     @locations.each do |id, (name, neighbour_ids, events)|
       # instantiate Location object with name, id and neighbour_ids and store it
       @locations[id] = Location.new(id, name, neighbour_ids)
     end
-    
+
     # add events
     Event::events.each do |event|
       # setup event
       event_obj = event.new
       event_obj.setup!(self)
-    
+
       if event.all?
         @locations.each_value { |location| location.events << event_obj }
       else

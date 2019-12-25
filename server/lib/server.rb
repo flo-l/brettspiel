@@ -40,22 +40,25 @@ end
 class Server
   # directory with content packs
   PACK_DIR = Dir.open(File.expand_path 'content')
-  
+
   def initialize
     # Hash with game_ids as keys and arrays of websocket_connections, aka clients as values
     @clients = {}
-    
+
+    # Hash with game_ids as keys and fibers that call game.handle as values
+    @games = {}
+
     # find available content-packs
     @available_packs = PACK_DIR.each.reject{ |x| ['.', '..'].include? x }.to_a
-    
+
     puts "packing content:", @available_packs.map { |pack| "  => #{pack}" }, ""
-    
+
     # build all content packs on server start
     @available_packs.each { |pack| Packer.pack(pack) }
   end
 
   private
-  
+
   # send all messages in res_ary to all clients
   def send_to_all(game_id, res_ary)
     @clients[game_id].each do |client|
@@ -65,7 +68,7 @@ class Server
     end
   end
 
-  # This handles an incoming message and returns an ary with min 1 response(s)
+  # This handles an incoming message
   def handle(msg_str, client)
     msg = Message.new(msg_str)
 
@@ -76,7 +79,8 @@ class Server
 
     # Load the game
     if msg.respond_to?(:game_id)
-      game = Game.load(msg.game_id)
+      raise GameIdWrongError unless @games.has_key? msg.game_id
+      game = @games[msg.game_id]
     else
       raise LackingGameIdError
     end
@@ -91,24 +95,23 @@ class Server
     end
 
     # Handle the request with the game object
-    res_ary = game.handle(msg)
-
-    # Save the game
-    game.save!
+    res_ary = game.resume(msg)
 
     # Deliver the response(s) to all concerned clients
-    send_to_all(game.id, res_ary)
+    send_to_all(msg.game_id, res_ary)
+
+    res_ary.clear # clear @response in Game object
   end
 
   # Creates a new game
   def new_game
     game = Game.new(@available_packs.first)
-    game.save!
+    @games[game.id] = Fiber.new { |msg| game.main_loop(msg) }
     {:type => "game_created", :game_id => game.id}.to_json
   end
 
   public
-  
+
   # Start the Server and go!
   def start!(port=2012)
     puts "listening on localhost:#{port}"

@@ -34,9 +34,6 @@ module MessageFormatting
   #
   # The player should answer with the number of the selected option (1-indexed)
   def message_question(player_id, character_id, question, options)
-    # The options keys must be buffered, so that the key of the answer can be returned by another method
-    @options_buffer = options.keys
-
     response = {:type => "question"}
     response["player_id"]    = player_id
     response["character_id"] = character_id
@@ -44,8 +41,16 @@ module MessageFormatting
     response["options"]      = options.values
     @response << response.to_json
 
-    # stop the request
-    throw :stop
+    # yield to server to get answer from user
+    msg = Fiber.yield @response
+
+    # validate response and return it
+    raise InvalidMessageError unless msg.type.to_sym == :answer
+    answer_index = msg.answer
+    raise ImpossibleResponseError unless (0...options.keys.count).include? answer_index
+
+    # return answer key
+    options.keys[answer_index]
   end
 
   def message_honor(player_id, amount)
