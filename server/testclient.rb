@@ -60,9 +60,7 @@ class GameClient
 
     EM.run do
       # Open up the connection
-      #@socket = EventMachine::WebSocketClient.connect("ws://localhost:#{@port}")
-      @socket = EventMachine::WebSocketClient.connect("ws://0.0.0.0:2012")
-      #@socket = EventMachine::WebSocketClient.connect("ws://192.168.0.12:2012")
+      @socket = EventMachine::WebSocketClient.connect("ws://0.0.0.0:#{@port}")
 
       # An alias of send_msg
       def @socket.puts(msg)
@@ -131,4 +129,4 @@ class GameClient
   end
 end
 
-GameClient.new(3000).start!
+GameClient.new(2012).start!
