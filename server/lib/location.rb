@@ -24,8 +24,8 @@ class Location
   end
 
   def select_event(game, mode)
-    #find events corresponding to the mode
-    events = @events.select { |event| event.send(mode) }
+    #find events corresponding to the mode that have non-zero probability
+    events = @events.select { |event| event.probability_points > 0 && event.send(mode) }
 
     raise NotImplementedError if events.empty?
 

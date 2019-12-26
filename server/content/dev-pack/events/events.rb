@@ -69,3 +69,20 @@ class FiberTest < Event
 end
 
 FiberTest.add_to HexenHaus
+
+class FiberTest2 < Event
+  def initialize
+    @character = Hexe
+
+    @active  = true
+    @passive = true
+
+    @probability_points = 0
+  end
+
+  def occur!
+    puts "Not good!", character: FloMaster
+  end
+end
+
+FiberTest.add_to HexenHaus
