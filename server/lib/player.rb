@@ -14,7 +14,7 @@
 
 class Player
   attr_reader :name, :id, :current_location, :honor, :cards
-  attr_writer :game
+  attr_accessor :game
 
   def initialize(name, game)
     @name = name
@@ -26,13 +26,13 @@ class Player
     @current_location = game.locations.values.first
     @honor = 0
 
-    @cards = CardHand.new
+    @cards = CardHand.new(self)
     @items = []
   end
 
   # This should prepare the players and set things like start cards etc.
   def prepare!
-    change_cards(1,1,1)
+    @cards.change(swords: 1, shields: 1, supply: 1)
   end
 
   # This sets current_location to its argument and fires a move message
@@ -86,7 +86,7 @@ class CardHand
     @shields += shields
     @supply += supply
 
-    @game.message_change_cards(@player.id, swords, shields, supply)
+    @player.game.message_change_cards(@player.id, swords, shields, supply)
   end
 
   def count

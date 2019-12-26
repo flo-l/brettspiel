@@ -26,6 +26,8 @@ class Offer < Event
 
     @active  = true
     @passive = true
+
+    @probability_points = 10
   end
 
   def occur!

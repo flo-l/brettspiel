@@ -27,9 +27,10 @@ class Location
     #find events corresponding to the mode
     events = @events.select { |event| event.send(mode) }
 
+    raise NotImplementedError if events.empty?
+
     #calculate probabilities
     sum_probability_points = events.map{ |event| event.probability_points }.inject(:+)
-    raise NotImplementedError if sum_probability_points <= 0
     probabilities = events.map{ |event| event.probability_points.to_f / sum_probability_points }
 
     #find a random number between 1 and 0
