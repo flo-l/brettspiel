@@ -8,12 +8,12 @@
 #     player.cards.swords # amount of swords
 
 # It's possible to add an item to a player like so:
-# player.items << item
+# player.add_item(item)
 # There are convenience methods available, that check for the presence
 # of one or all of the three items a player should collect
 
 class Player
-  attr_reader :name, :id, :current_location, :honor
+  attr_reader :name, :id, :current_location, :honor, :cards
   attr_writer :game
 
   def initialize(name, game)
@@ -48,15 +48,6 @@ class Player
     @honor = n
   end
 
-  # Adds the given amount of cards to the hand and fires a card_change message
-  def change_cards(swords, shields, supply)
-    @cards.swords += swords
-    @cards.shields += shields
-    @cards.supply += supply
-
-    @game.message_change_cards(@id, swords, shields, supply)
-  end
-
   # No items should be added to or removed from the items ary,
   # thus others only get a freezed copy. Items inside can still be modified.
   def items
@@ -79,12 +70,23 @@ class Player
 end
 
 class CardHand
-  attr_accessor :swords, :shields, :supply
+  attr_reader :swords, :shields, :supply
 
-  def initialize
+  def initialize(player)
+    @player = player
+
     @swords = 0
     @shields = 0
     @supply = 0
+  end
+
+  # Adds the given amount of cards to the hand and fires a card_change message
+  def change(swords: 0, shields: 0, supply: 0)
+    @swords += swords
+    @shields += shields
+    @supply += supply
+
+    @game.message_change_cards(@player.id, swords, shields, supply)
   end
 
   def count

@@ -12,9 +12,6 @@ require_relative 'player.rb'
 class Game
   include MessageFormatting
 
-  STORE_PATH = File.expand_path('games/') + '/'
-  FILE_EXTENSION = '.game'
-
   ## API for events:
   # This let's the given player be next
   def next_player=(player)
@@ -24,9 +21,11 @@ class Game
     @next_player = player
   end
 
-  attr_reader :id, :players, :characters, :locations, :current_player, :answers_buffer
+  # these are all immutable. but the underlying objects, like the players, are mutable.
+  attr_reader :id, :players, :characters, :locations, :current_player
 
-  # most of the things in here is mutable by the events
+  # from here on only implementation details
+
   def initialize(pack_name)
     # id and if the game has already started
     @id = SecureRandom.hex
@@ -34,7 +33,6 @@ class Game
 
     # content pack management
     @pack_folder = File.expand_path('content/' << pack_name)
-    @pack_file   = pack_name
 
     # player things
     @players = []
@@ -53,29 +51,6 @@ class Game
 
     # Locations
     load_locations
-  end
-
-  ## API for the server:
-  # Loads a Game with a given id
-  def self.load(id)
-    path = STORE_PATH + id + FILE_EXTENSION
-
-    # Open the file or raise an exception
-    begin
-      source = File.open(path, 'r')
-    rescue SystemCallError
-      raise GameIdWrongError
-    end
-
-    # Load the game object
-    game = Marshal.load(source)
-  end
-
-  # Saves the Game to disk
-  def save!
-    target = File.new(STORE_PATH + @id + FILE_EXTENSION, 'w')
-    Marshal.dump(self, target)
-    target.close
   end
 
   # This handles messages infinitely. It yields requests from the game and expects to be passed the response via Fiber.resume

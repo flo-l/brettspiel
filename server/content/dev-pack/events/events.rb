@@ -6,14 +6,11 @@ class P0wn < Event
     @active  = true
     @passive = true
 
-    @necessary    = false
-
     @probability_points = 10
-
-    @text = "Woop, you've been p0wnd!"
   end
 
   def occur!
+    puts "Woop, you've been p0wnd!"
     @game.current_player.honor += 50
     @game.current_player.current_location = @game.locations.values.sample
     @game.next_player = @game.players.first
@@ -29,15 +26,11 @@ class Offer < Event
 
     @active  = true
     @passive = true
-
-    @necessary    = true
-
-    @probability_points = 20
-
-    @text = "Lutscherstange, Lutscherstange.."
   end
 
   def occur!
+    puts "Lutscherstange, Lutscherstange.."
+
     yes = ask(@game.current_player, "Wer will eine Lutscherstange?", { true => "Ja, absolut!", false => "Nope!" })
 
     if yes
@@ -59,14 +52,12 @@ class FiberTest < Event
     @active  = true
     @passive = true
 
-    @necessary    = true
-
     @probability_points = 10
-
-    @text = "Test Event!"
   end
 
   def occur!
+    puts "Test Event!"
+
     r = rand
     puts r
     x = ask(@game.current_player, "ready?", {'YES' => 'yes', 'NO' => 'no'})

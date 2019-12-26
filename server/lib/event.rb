@@ -35,7 +35,10 @@ class Event
   def self.all?     ; @all      ; end
   def self.locations; @locations; end
 
-  attr_reader   :character, :text, :active, :passive
+  attr_reader   :character, :active, :passive
+
+  # probability of the event is 1 by default. higher values make the event more
+  # likely to occur. lower values less so. negative values are forbidden.
   attr_accessor :probability_points
 
   def initialize
@@ -47,20 +50,13 @@ class Event
   def setup!(game)
   end
 
-  #any event can happen by default, may be overridden
-  def possible?(game); true; end
-
-  #no event is necessary by default, may be overridden
-  def necessary?(game); false end
-
   # this is the only way an event can occur, in the future
   # probably more setup will be necessary
   def prepare_and_occur!(game)
     @game = game
-    @game.message_character(@character.id, @text)
     occur!
   end
-
+    
   private
 
   #sometimes nothing happens, may be overridden
@@ -68,16 +64,16 @@ class Event
 
   # This takes a hash, whose values are options (strings) and asks the
   # player which they choose. It returns the key of the selected option
-  def ask(player, question, options)
+  def ask(player, question, options, character: @character)
     raise ProgrammerError unless player.is_a? Player and options.is_a? Hash
-    @game.message_question(player.id, @character.id, question, options)
+    @game.message_question(player.id, character.id, question, options)
   end
 
   # Replaces the normal puts with a puts that sends a message from
   # the character of the event to the player
-  def puts(*args)
+  def puts(*args, character: @character)
     args.each do |obj|
-      @game.message_character(@character.id, obj.to_s)
+      @game.message_character(character.id, obj.to_s)
     end
   end
 end
