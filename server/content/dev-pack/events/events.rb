@@ -33,12 +33,12 @@ class Offer < Event
   def occur!
     puts "Lutscherstange, Lutscherstange.."
 
-    yes = ask(@game.current_player, "Wer will eine Lutscherstange?", { true => "Ja, absolut!", false => "Nope!" })
+    yes = ask(@game.current_player, "Wer will eine Lutscherstange?", { "Ja, absolut!" => true, "Nope!" => false })
 
     if yes
       puts "Well, then you're gay.."
     else
-      puts ask(@game.current_player, "Wirrklich nicht?", { "Well, then you're gay.." => "Ok doch!", "Good choice Mister!" => "Definitiv nicht!" })
+      puts ask(@game.current_player, "Wirrklich nicht?", { "Ok doch!" => "Well, then you're gay..", "Definitiv nicht!" => "Good choice Mister!" })
     end
 
     @necessary = false
@@ -58,11 +58,11 @@ class FiberTest < Event
   end
 
   def occur!
-    puts "Test Event!"
+    puts "Test Event!", character: FloMaster
 
     r = rand
     puts r
-    x = ask(@game.current_player, "ready?", {'YES' => 'yes', 'NO' => 'no'})
+    x = ask(@game.current_player, "ready?", {'yes' => 'YES', 'no' => 'NO'})
     puts r
     puts x
   end

@@ -29,16 +29,16 @@ module MessageFormatting
   end
 
   # This asks the player a question and should be able to give back
-  # the selected option's *key*, even though this must happen somewhere else,
+  # the selected option's *value*, even though this must happen somewhere else,
   # because the request ends before the answer is recieved of course.
   #
-  # The player should answer with the number of the selected option (1-indexed)
+  # The player should answer with the number of the selected option (0-indexed)
   def message_question(player_id, character_id, question, options)
     response = {:type => "question"}
     response["player_id"]    = player_id
     response["character_id"] = character_id
     response["question"]     = question
-    response["options"]      = options.values
+    response["options"]      = options.keys
     @response << response.to_json
 
     # yield to server to get answer from user
@@ -47,10 +47,10 @@ module MessageFormatting
     # validate response and return it
     raise InvalidMessageError unless msg.type.to_sym == :answer
     answer_index = msg.answer
-    raise ImpossibleResponseError unless (0...options.keys.count).include? answer_index
+    raise ImpossibleResponseError unless (0...options.values.count).include? answer_index
 
     # return answer key
-    options.keys[answer_index]
+    options.values[answer_index]
   end
 
   def message_honor(player_id, amount)
